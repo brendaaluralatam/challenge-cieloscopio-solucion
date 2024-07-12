@@ -135,9 +135,7 @@ Aquí están los pasos básicos para generar un JAR usando herramientas comunes 
 
 1. **Compila tu código**: Navega hasta el directorio donde se encuentra tu código fuente y compila los archivos `.java` a `.class` usando el comando `javac`.
 
-   ```
-   bash
-   Copiar código
+   ```bash
    javac -d out src/com/tuProyecto/*.java
    ```
 
@@ -145,9 +143,7 @@ Aquí están los pasos básicos para generar un JAR usando herramientas comunes 
 
 2. **Crea el archivo JAR**: Usa el comando `jar` para crear el archivo JAR a partir de los archivos `.class` compilados.
 
-   ```
-   bash
-   Copiar código
+   ```bash
    jar cvf miProyecto.jar -C out .
    ```
 
