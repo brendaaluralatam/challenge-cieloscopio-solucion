@@ -2,7 +2,6 @@ package principal;
 
 import modelos.Ciudad;
 import modelos.InformacionClima;
-import servicio.SolicitudGeolocalizacion;
 import servicio.ServicioClima;
 
 import java.io.IOException;
@@ -10,7 +9,6 @@ import java.util.Scanner;
 import java.time.format.DateTimeFormatter;
 
 public class Principal {
-    static SolicitudGeolocalizacion solicitudGeo = new SolicitudGeolocalizacion("inserte-tu-clave-api-aquí");
     static Ciudad ciudadEncontrada;
     public static void presentarRespuesta(InformacionClima respuesta){
         DateTimeFormatter formatterDay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -38,21 +36,19 @@ public class Principal {
                 "--------------------------";
         System.out.println(respuestaEnTexto);
     }
-    public static void obtenerDatosMeteorologicos(String nombreCiudad, double latitud, double longitud){
+    public static void obtenerDatosMeteorologicos(String nombreCiudad){
         ServicioClima weatherService = new ServicioClima();
         try {
-            InformacionClima weatherData = weatherService.getWeatherData(nombreCiudad, latitud, longitud);
+            InformacionClima weatherData = weatherService.getWeatherData(nombreCiudad);
             presentarRespuesta(weatherData);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
     public static void busquedaDatosPorCiudad(String nombreCiudad){
-        //Solicitud geolocalización
-        ciudadEncontrada = solicitudGeo.obtenerCiudad(nombreCiudad);
         //Solicitud principal
-        if(ciudadEncontrada!=null){
-            obtenerDatosMeteorologicos(ciudadEncontrada.getNombre(), ciudadEncontrada.getLatitud(),ciudadEncontrada.getLongitud());
+        if(nombreCiudad!=null){
+            obtenerDatosMeteorologicos(nombreCiudad);
         } else {
             System.out.println("Ciudad no encontrada, inténtalo de nuevo.");
         }
