@@ -1,84 +1,47 @@
 package principal;
 
-import modelos.Ciudad;
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import modelos.InformacionClima;
-import servicio.SolicitudGeolocalizacion;
-import servicio.ServicioClima;
 
 import java.io.IOException;
-import java.util.Scanner;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
 
 public class Principal {
-    static SolicitudGeolocalizacion solicitudGeo = new SolicitudGeolocalizacion("inserte-tu-clave-api-aquí");
-    static Ciudad ciudadEncontrada;
-    public static void presentarRespuesta(InformacionClima respuesta){
-        DateTimeFormatter formatterDay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter formatterHour = DateTimeFormatter.ofPattern("HH:mm");
+    private static final String API_KEY = "tu-api-key";
+    private static final String BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
 
-        String precipitacion = null;
-        if(respuesta.getPrecipitacion() != -1.0){
-            precipitacion = String.valueOf(respuesta.getPrecipitacion());
-        } else {
-            precipitacion = "valor no informado";
-        }
-
-        String respuestaEnTexto = "--------------------------\n" +
-                "Respuesta: \n" +
-                "Ciudad: " + respuesta.getNombre() + "\n" +
-                "Fecha: " + respuesta.getFechaDeSolicitud().format(formatterDay) + "\n" +
-                "Horario: " + respuesta.getFechaDeSolicitud().format(formatterHour) + "\n" +
-                "\n" +
-                "Temperatura actual: " + respuesta.getTemperaturaActual() + "\n" +
-                "Condición climática: " + respuesta.getCondicionClimatica() + "\n" +
-                "\n" +
-                "Temperatura mínima: " + respuesta.getTemperaturaMinima() + "\n" +
-                "Temperatura máxima: " + respuesta.getTemperaturaMaxima() + "\n" +
-                "Precipitación: " + precipitacion + "\n" +
-                "--------------------------";
-        System.out.println(respuestaEnTexto);
-    }
-    public static void obtenerDatosMeteorologicos(String nombreCiudad, double latitud, double longitud){
-        ServicioClima weatherService = new ServicioClima();
-        try {
-            InformacionClima weatherData = weatherService.getWeatherData(nombreCiudad, latitud, longitud);
-            presentarRespuesta(weatherData);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    public static void busquedaDatosPorCiudad(String nombreCiudad){
-        //Solicitud geolocalización
-        ciudadEncontrada = solicitudGeo.obtenerCiudad(nombreCiudad);
-        //Solicitud principal
-        if(ciudadEncontrada!=null){
-            obtenerDatosMeteorologicos(ciudadEncontrada.getNombre(), ciudadEncontrada.getLatitud(),ciudadEncontrada.getLongitud());
-        } else {
-            System.out.println("Ciudad no encontrada, inténtalo de nuevo.");
-        }
-    }
     public static void main(String[] args) throws IOException, InterruptedException {
+
         Scanner lectura = new Scanner(System.in);
         var respuesta = 0;
-        while(respuesta!=7){
+        while (respuesta != 7) {
             System.out.println(
                     "\nChallenge Cieloscopio: \n" +
-                    "------------------------------------\n" +
-                    "Elige una ciudad para obtener los datos meteorológicos: \n" +
-                    "1. Ciudad de México  \n" +
-                    "2. Buenos Aires \n" +
-                    "3. Bogotá \n" +
-                    "4. Lima \n" +
-                    "5. Santiago \n" +
-                    "6. Deseo consultar otra ciudad \n" +
-                    "7. Salir \n" +
-                    "------------------------------------"
+                            "------------------------------------\n" +
+                            "Elige una ciudad para obtener los datos meteorológicos: \n" +
+                            "1. Ciudad de México  \n" +
+                            "2. Buenos Aires \n" +
+                            "3. Bogotá \n" +
+                            "4. Lima \n" +
+                            "5. Santiago \n" +
+                            "6. Deseo consultar otra ciudad \n" +
+                            "7. Salir \n" +
+                            "------------------------------------"
             );
 
             System.out.println("Elige una opción basada en el numero: ");
             respuesta = Integer.parseInt(lectura.nextLine());
 
-            switch(respuesta){
+            switch (respuesta) {
                 case 1 -> busquedaDatosPorCiudad("Ciudad de México");
                 case 2 -> busquedaDatosPorCiudad("Buenos Aires");
                 case 3 -> busquedaDatosPorCiudad("Bogotá");
@@ -99,5 +62,55 @@ public class Principal {
                 }
             }
         }
+    }
+
+    public static void busquedaDatosPorCiudad(String ciudad) throws IOException, InterruptedException {
+        // Reemplaza los espacios en el nombre de la ciudad para que se pueda usar en la URL correctamente
+        ciudad = ciudad.replace(" ", "+");
+        String direccion = BASE_URL + String.format("?q=%s&appid=%s&units=metric&lang=es", ciudad, API_KEY);
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(direccion))
+                .build();
+        HttpResponse<String> response = client
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        String json = response.body();
+        System.out.println(json);
+
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+                .create();
+
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+
+        String nombreCiudad = jsonObject.get("name").getAsString();
+        double temperaturaActual = jsonObject.getAsJsonObject("main").get("temp").getAsDouble();
+        double temperaturaMinima = jsonObject.getAsJsonObject("main").get("temp_min").getAsDouble();
+        double temperaturaMaxima = jsonObject.getAsJsonObject("main").get("temp_max").getAsDouble();
+        String condicionClimatica = jsonObject.getAsJsonArray("weather").get(0).getAsJsonObject().get("description").getAsString();
+
+        InformacionClima respuestaInformacion = new InformacionClima(nombreCiudad, temperaturaActual, temperaturaMinima, temperaturaMaxima, condicionClimatica);
+        presentarRespuesta(respuestaInformacion);
+    }
+
+    public static void presentarRespuesta(InformacionClima respuesta) {
+        DateTimeFormatter formatterDay = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter formatterHour = DateTimeFormatter.ofPattern("HH:mm");
+
+        String respuestaEnTexto = "--------------------------\n" +
+                "Respuesta: \n" +
+                "Ciudad: " + respuesta.getNombre() + "\n" +
+                "Fecha: " + respuesta.getFechaDeSolicitud().format(formatterDay) + "\n" +
+                "Horario: " + respuesta.getFechaDeSolicitud().format(formatterHour) + "\n" +
+                "\n" +
+                "Temperatura actual: " + respuesta.getTemperaturaActual() + "\n" +
+                "Condición climática: " + respuesta.getCondicionClimatica() + "\n" +
+                "\n" +
+                "Temperatura mínima: " + respuesta.getTemperaturaMinima() + "\n" +
+                "Temperatura máxima: " + respuesta.getTemperaturaMaxima() + "\n" +
+                "--------------------------";
+        System.out.println(respuestaEnTexto);
     }
 }
