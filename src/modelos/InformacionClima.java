@@ -1,17 +1,26 @@
 package modelos;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 public class InformacionClima {
+    @SerializedName("name")
     private String nombre;
+
     private LocalDateTime fechaDeSolicitud;
+    @SerializedName("temp")
     private double temperaturaActual;
+    @SerializedName("temp_min")
     private double temperaturaMinima;
+    @SerializedName("temp_max")
     private double temperaturaMaxima;
+    @SerializedName("description")
     private String condicionClimatica;
-    private double precipitacion;
+
+
 
     public InformacionClima() {
     }
@@ -20,15 +29,15 @@ public class InformacionClima {
                             double temperaturaActual,
                             double temperaturaMinima,
                             double temperaturaMaxima,
-                            String condicionClimatica,
-                            double precipitacion) {
+                            String condicionClimatica
+                           ) {
         this.nombre = nombre;
         this.fechaDeSolicitud = LocalDateTime.now();
         this.temperaturaActual = temperaturaActual;
         this.temperaturaMinima = temperaturaMinima;
         this.temperaturaMaxima = temperaturaMaxima;
         this.condicionClimatica = condicionClimatica;
-        this.precipitacion = precipitacion;
+
     }
 
     public String getNombre() {
@@ -79,14 +88,6 @@ public class InformacionClima {
         this.condicionClimatica = condicionClimatica;
     }
 
-    public double getPrecipitacion() {
-        return precipitacion;
-    }
-
-    public void setPrecipitacion(double precipitacion) {
-        this.precipitacion = precipitacion;
-    }
-
     @Override
     public String toString() {
         return "InformacionClima{" +
@@ -96,7 +97,6 @@ public class InformacionClima {
                 ", temperaturaMinima=" + temperaturaMinima +
                 ", temperaturaMaxima=" + temperaturaMaxima +
                 ", condicionClimatica='" + condicionClimatica + '\'' +
-                ", precipitacion=" + precipitacion +
                 '}';
     }
 }
